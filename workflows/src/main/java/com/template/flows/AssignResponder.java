@@ -8,11 +8,11 @@ import net.corda.core.transactions.SignedTransaction;
 // ******************
 // * Responder flow *
 // ******************
-@InitiatedBy(Initiator.class)
-public class Responder extends FlowLogic<SignedTransaction> {
+@InitiatedBy(AssignInitiator.class)
+public class AssignResponder extends FlowLogic<SignedTransaction> {
     private FlowSession counterPartySession;
 
-    public Responder(FlowSession counterPartySession) {
+    public AssignResponder(FlowSession counterPartySession) {
         this.counterPartySession = counterPartySession;
     }
 
