@@ -135,7 +135,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
     node {
         name "O=PartyA,L=London,C=GB"
         p2pPort 10005
-        h2Port 55555
+        h2Port 55556
         rpcSettings {
             address("localhost:10006")
             adminAddress("localhost:10046")
@@ -145,7 +145,7 @@ task deployNodes(type: net.corda.plugins.Cordform, dependsOn: ['jar']) {
     node {
         name "O=PartyB,L=New York,C=US"
         p2pPort 10008
-        h2Port 55556
+        h2Port 55557
         rpcSettings {
             address("localhost:10009")
             adminAddress("localhost:10049")

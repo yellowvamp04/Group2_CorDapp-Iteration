@@ -2,10 +2,9 @@ package com.template.flows;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import main.java.com.template.contracts.ToDoContract;
-import main.java.com.template.states.ToDoState;
-import net.corda.core.contracts.UniqueIdentifier;
+import com.sun.istack.Nullable;
+import com.template.contracts.ToDoContract;
+import com.template.states.ToDoState;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
@@ -16,6 +15,7 @@ import net.corda.core.utilities.ProgressTracker;
 import java.util.Arrays;
 import java.util.Date;
 
+
 // ******************
 // * Initiator flow *
 // ******************
@@ -23,11 +23,10 @@ import java.util.Date;
 @StartableByRPC
 public class Initiator extends FlowLogic<SignedTransaction> {
     private final ProgressTracker progressTracker = new ProgressTracker();
-    private final Party assignedTo;
-    private final String taskDescription;
+    private final @Nullable String taskDescription;
 
-    public Initiator(Party assignedTo, String taskDescription) {
-        this.assignedTo = assignedTo;
+    public Initiator(@Nullable String taskDescription) {
+        if (taskDescription.isEmpty()) { taskDescription = " "; }
         this.taskDescription = taskDescription;
     }
     
@@ -43,19 +42,24 @@ public class Initiator extends FlowLogic<SignedTransaction> {
         ServiceHub serviceHub = getServiceHub();
         Party me = getOurIdentity();
 
-        ToDoState ts = new ToDoState(me, assignedTo, taskDescription, new UniqueIdentifier(), new Date());
+        ToDoState ts = new ToDoState(me, me, taskDescription, new Date());
+
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
 
+        System.out.println("ToDoState: " + ts);
+        System.out.println("AssignedBy: " + ts.getAssignedBy());
+        System.out.println("AssignedTo: " + ts.getAssignedTo());
+        System.out.println("LinearId: " + ts.getLinearId());
+        System.out.println("DateCreation: " + ts.getDateCreation());
+
         TransactionBuilder tb = new TransactionBuilder(notary);
-        tb = tb.addOutputState(ts);
-        tb = tb.addCommand(new ToDoContract.Commands.Create(), ImmutableList.of(ts.getAssignedBy().getOwningKey(), ts.getAssignedTo().getOwningKey()));
+        tb = tb.addOutputState(ts, ToDoContract.ID);
+        tb = tb.addCommand(new ToDoContract.Commands.Create(), ImmutableList.of(me.getOwningKey(), me.getOwningKey()));
 
-        SignedTransaction ptx = serviceHub.signInitialTransaction(tb);
+        tb.verify(serviceHub);
 
-        FlowSession assignedToSession = initiateFlow(assignedTo);
+        final SignedTransaction ptx = serviceHub.signInitialTransaction(tb);
 
-        SignedTransaction stx = subFlow(new CollectSignaturesFlow(ptx, ImmutableSet.of(assignedToSession)));
-
-        return subFlow(new FinalityFlow(stx, Arrays.asList(assignedToSession)));
+        return subFlow(new FinalityFlow(ptx, Arrays.asList()));
     }
 }
