@@ -16,26 +16,29 @@ public class ToDoContract implements Contract {
     // This is used to identify our contract when building a transaction.
     public static final String ID = "com.template.contracts.ToDoContract";
 
+    // Used to indicate the transaction's intent.
+    public interface Commands extends CommandData {
+        class Create implements Commands {}
+        class Assign implements Commands {}
+    }
+
     // A transaction is valid if the verify() function of the contract of all the transaction's input and output states
     // does not throw an exception.
     @Override
     public void verify(LedgerTransaction tx) {
-        final CommandWithParties<Commands.Create> command = requireSingleCommand(tx.getCommands(), Commands.Create.class);
+        final CommandWithParties<Commands> command = requireSingleCommand(tx.getCommands(), ToDoContract.Commands.class);
 
-        requireThat(require -> {
-            final ToDoState out = tx.outputsOfType(ToDoState.class).get(0);
-            require.using("Iteration1: Task Description should not be empty.",
-                    !out.getTaskDescription().trim().isEmpty());
+        if (command.getValue() instanceof ToDoContract.Commands.Create) {
+            requireThat(require -> {
+                final ToDoState out = tx.outputsOfType(ToDoState.class).get(0);
+                require.using("Iteration1: Task Description should not be empty.",
+                        !out.getTaskDescription().trim().isEmpty());
 
-            require.using("Iteration1: Task Description can't exceed 40 characters!",
-                    out.getTaskDescription().trim().length() <= 40);
+                require.using("Iteration1: Task Description can't exceed 40 characters!",
+                        out.getTaskDescription().trim().length() <= 40);
 
-            return null;
-        });
-    }
-
-    // Used to indicate the transaction's intent.
-    public interface Commands extends CommandData {
-        class Create implements Commands {}
+                return null;
+            });
+        }
     }
 }

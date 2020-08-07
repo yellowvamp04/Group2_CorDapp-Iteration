@@ -71,17 +71,19 @@ public class AssignInitiator extends FlowLogic<String> {
 
         TransactionBuilder tb = new TransactionBuilder(notary);
         tb = tb.addInputState(stateAndRef);
-        tb = tb.addOutputState(ts2, ToDoContract.ID);
-        tb = tb.addCommand(new ToDoContract.Commands.Create(), receiver.getOwningKey());
+        tb = tb.addOutputState(ts2);
+        tb = tb.addCommand(new ToDoContract.Commands.Assign(), ImmutableList.of(me.getOwningKey(), me.getOwningKey(), receiver.getOwningKey()));
 
         tb.verify(serviceHub);
 
         final SignedTransaction ptx = serviceHub.signInitialTransaction(tb);
 
         FlowSession otherPartySession = initiateFlow(receiver);
-        SignedTransaction ftx = subFlow(new CollectSignaturesFlow(ptx, ImmutableSet.of(otherPartySession), ImmutableList.of(me.getOwningKey())));
-        otherPartySession.send(ptx);
-        SignedTransaction sftx = subFlow(new FinalityFlow(ptx, otherPartySession));
+
+        SignedTransaction ftx = subFlow(new CollectSignaturesFlow(ptx, ImmutableSet.of(otherPartySession), ImmutableList.of(me.getOwningKey(), me.getOwningKey(), receiver.getOwningKey())));
+        otherPartySession.send(ftx);
+
+        SignedTransaction sftx = subFlow(new FinalityFlow(ftx, otherPartySession));
         System.out.println(sftx);
 
         return ("ToDo assign request sent to party: " + receiver.getName());

@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.sun.istack.Nullable;
 import com.template.contracts.ToDoContract;
 import com.template.states.ToDoState;
+import com.typesafe.config.Optional;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
@@ -25,7 +26,7 @@ public class Initiator extends FlowLogic<SignedTransaction> {
     private final ProgressTracker progressTracker = new ProgressTracker();
     private final @Nullable String taskDescription;
 
-    public Initiator(@Nullable String taskDescription) {
+    public Initiator(@Optional @Nullable String taskDescription) {
         if (taskDescription.isEmpty()) { taskDescription = " "; }
         this.taskDescription = taskDescription;
     }
@@ -53,7 +54,7 @@ public class Initiator extends FlowLogic<SignedTransaction> {
         System.out.println("DateCreation: " + ts.getDateCreation());
 
         TransactionBuilder tb = new TransactionBuilder(notary);
-        tb = tb.addOutputState(ts, ToDoContract.ID);
+        tb = tb.addOutputState(ts);
         tb = tb.addCommand(new ToDoContract.Commands.Create(), ImmutableList.of(me.getOwningKey(), me.getOwningKey()));
 
         tb.verify(serviceHub);

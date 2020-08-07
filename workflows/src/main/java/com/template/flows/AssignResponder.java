@@ -28,6 +28,7 @@ public class AssignResponder extends FlowLogic<SignedTransaction> {
         };
 
         SignedTransaction stx = subFlow(signTransactionFlow);
+        System.out.println(stx);
 
         return subFlow(new ReceiveFinalityFlow(counterPartySession, stx.getId()));
     }
