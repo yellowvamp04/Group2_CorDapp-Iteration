@@ -22,14 +22,16 @@ public class ToDoState implements LinearState {
     private final UniqueIdentifier linearId;
     private final Date dateCreation;
     private final String deadline;
+    private final String completionStatus;
 
-    public ToDoState(Party assignedBy, Party assignedTo, String taskDescription, Date dateCreation, String deadline) {
+    public ToDoState(Party assignedBy, Party assignedTo, String taskDescription, Date dateCreation, String deadline, String completionStatus) {
         this.assignedBy = assignedBy;
         this.assignedTo = assignedTo;
         this.taskDescription = taskDescription;
         this.linearId = new UniqueIdentifier();
         this.dateCreation = dateCreation;
         this.deadline = deadline;
+        this.completionStatus = completionStatus;
     }
 
     public Party getAssignedBy() {
@@ -49,6 +51,8 @@ public class ToDoState implements LinearState {
     }
 
     public String getDeadline() { return deadline; }
+
+    public String getCompletionStatus() { return completionStatus; }
 
     @Override
     public List<AbstractParty> getParticipants() {

@@ -16,6 +16,7 @@ import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
 
+import java.time.Duration;
 import java.util.*;
 
 
@@ -28,10 +29,12 @@ public class AssignInitiator extends FlowLogic<String> {
     private final ProgressTracker progressTracker = new ProgressTracker();
     private final String linearId;
     private final String assignedTo;
+    private final Integer sleepSeconds;
 
-    public AssignInitiator(String linearId, String assignedTo) {
+    public AssignInitiator(String linearId, String assignedTo, Integer sleepSeconds) {
         this.linearId = linearId.trim();
         this.assignedTo = assignedTo.trim();
+        this.sleepSeconds = sleepSeconds;
     }
 
     @Override
@@ -57,7 +60,7 @@ public class AssignInitiator extends FlowLogic<String> {
         final List<StateAndRef<ToDoState>> states = taskStatePage.getStates();
         final StateAndRef<ToDoState> stateAndRef = states.get(0);
         final ToDoState ts = stateAndRef.getState().getData();
-        final ToDoState ts2 = new ToDoState(me, receiver, ts.getTaskDescription(), ts.getDateCreation(), ts.getDeadline());
+        final ToDoState ts2 = new ToDoState(me, receiver, ts.getTaskDescription(), ts.getDateCreation(), ts.getDeadline(), ts.getCompletionStatus());
 
         System.out.println(queryCriteria);
         System.out.println(taskStatePage);
@@ -70,8 +73,9 @@ public class AssignInitiator extends FlowLogic<String> {
 
         TransactionBuilder tb = new TransactionBuilder(notary);
         tb = tb.addInputState(stateAndRef);
-        tb = tb.addOutputState(ts2, ToDoContract.ID);
+        tb = tb.addOutputState(ts2);
         tb = tb.addCommand(new ToDoContract.Commands.Assign(), ImmutableList.of(me.getOwningKey(), receiver.getOwningKey()));
+        tb = tb.setTimeWindow(getServiceHub().getClock().instant(), Duration.ofSeconds(sleepSeconds));
         tb.verify(serviceHub);
 
         final SignedTransaction ptx = serviceHub.signInitialTransaction(tb);

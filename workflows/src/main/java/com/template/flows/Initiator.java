@@ -44,7 +44,7 @@ public class Initiator extends FlowLogic<SignedTransaction> {
         ServiceHub serviceHub = getServiceHub();
         Party me = getOurIdentity();
 
-        ToDoState ts = new ToDoState(me, me, taskDescription, new Date(), deadline);
+        ToDoState ts = new ToDoState(me, me, taskDescription, new Date(), deadline, "OPEN");
 
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
 

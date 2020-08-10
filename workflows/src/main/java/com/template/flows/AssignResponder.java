@@ -5,6 +5,8 @@ import com.sun.istack.NotNull;
 import net.corda.core.flows.*;
 import net.corda.core.transactions.SignedTransaction;
 
+import java.time.Duration;
+
 
 // ******************
 // * Responder flow *
@@ -27,6 +29,10 @@ public class AssignResponder extends FlowLogic<SignedTransaction> {
                 System.out.println("check!!");
             }
         };
+
+        System.out.println("sleeping for 10 seconds...");
+        FlowLogic.sleep(Duration.ofSeconds(10));
+        System.out.println("awaken... starts processing...");
 
         final SignedTransaction stx = subFlow(signTransactionFlow);
         System.out.println(stx);
