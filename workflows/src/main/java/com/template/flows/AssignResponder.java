@@ -5,6 +5,7 @@ import com.sun.istack.NotNull;
 import net.corda.core.flows.*;
 import net.corda.core.transactions.SignedTransaction;
 
+
 // ******************
 // * Responder flow *
 // ******************
@@ -27,7 +28,7 @@ public class AssignResponder extends FlowLogic<SignedTransaction> {
             }
         };
 
-        SignedTransaction stx = subFlow(signTransactionFlow);
+        final SignedTransaction stx = subFlow(signTransactionFlow);
         System.out.println(stx);
 
         return subFlow(new ReceiveFinalityFlow(counterPartySession, stx.getId()));

@@ -30,8 +30,8 @@ public class AssignInitiator extends FlowLogic<String> {
     private final String assignedTo;
 
     public AssignInitiator(String linearId, String assignedTo) {
-        this.linearId = linearId;
-        this.assignedTo = assignedTo;
+        this.linearId = linearId.trim();
+        this.assignedTo = assignedTo.trim();
     }
 
     @Override
@@ -43,7 +43,6 @@ public class AssignInitiator extends FlowLogic<String> {
     @Override
     public String call() throws FlowException {
         // Initiator flow logic goes here.
-        /* ServiceHub: Get hold of the services that the Corda container provides */
         ServiceHub serviceHub = getServiceHub();
         IdentityService identityService = serviceHub.getIdentityService();
         Set<Party> partySet = identityService.partiesFromName(assignedTo, true);
@@ -58,7 +57,7 @@ public class AssignInitiator extends FlowLogic<String> {
         final List<StateAndRef<ToDoState>> states = taskStatePage.getStates();
         final StateAndRef<ToDoState> stateAndRef = states.get(0);
         final ToDoState ts = stateAndRef.getState().getData();
-        final ToDoState ts2 = new ToDoState(me, receiver, ts.getTaskDescription(), ts.getDateCreation());
+        final ToDoState ts2 = new ToDoState(me, receiver, ts.getTaskDescription(), ts.getDateCreation(), ts.getDeadline());
 
         System.out.println(queryCriteria);
         System.out.println(taskStatePage);
@@ -71,19 +70,16 @@ public class AssignInitiator extends FlowLogic<String> {
 
         TransactionBuilder tb = new TransactionBuilder(notary);
         tb = tb.addInputState(stateAndRef);
-        tb = tb.addOutputState(ts2);
-        tb = tb.addCommand(new ToDoContract.Commands.Assign(), ImmutableList.of(me.getOwningKey(), me.getOwningKey(), receiver.getOwningKey()));
-
+        tb = tb.addOutputState(ts2, ToDoContract.ID);
+        tb = tb.addCommand(new ToDoContract.Commands.Assign(), ImmutableList.of(me.getOwningKey(), receiver.getOwningKey()));
         tb.verify(serviceHub);
 
         final SignedTransaction ptx = serviceHub.signInitialTransaction(tb);
 
         FlowSession otherPartySession = initiateFlow(receiver);
+        SignedTransaction ftx = subFlow(new CollectSignaturesFlow(ptx, ImmutableSet.of(otherPartySession), CollectSignaturesFlow.Companion.tracker()));
 
-        SignedTransaction ftx = subFlow(new CollectSignaturesFlow(ptx, ImmutableSet.of(otherPartySession), ImmutableList.of(me.getOwningKey(), me.getOwningKey(), receiver.getOwningKey())));
-        otherPartySession.send(ftx);
-
-        SignedTransaction sftx = subFlow(new FinalityFlow(ftx, otherPartySession));
+        SignedTransaction sftx = subFlow(new FinalityFlow(ftx, ImmutableSet.of(otherPartySession)));
         System.out.println(sftx);
 
         return ("ToDo assign request sent to party: " + receiver.getName());

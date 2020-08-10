@@ -2,16 +2,15 @@ package com.template.flows;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.google.common.collect.ImmutableList;
-import com.sun.istack.Nullable;
 import com.template.contracts.ToDoContract;
 import com.template.states.ToDoState;
-import com.typesafe.config.Optional;
 import net.corda.core.flows.*;
 import net.corda.core.identity.Party;
 import net.corda.core.node.ServiceHub;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Date;
@@ -24,11 +23,13 @@ import java.util.Date;
 @StartableByRPC
 public class Initiator extends FlowLogic<SignedTransaction> {
     private final ProgressTracker progressTracker = new ProgressTracker();
-    private final @Nullable String taskDescription;
+    private final String taskDescription;
+    private final String deadline;
 
-    public Initiator(@Optional @Nullable String taskDescription) {
-        if (taskDescription.isEmpty()) { taskDescription = " "; }
-        this.taskDescription = taskDescription;
+    public Initiator(@Nullable String taskDescription, String deadline) {
+        if (taskDescription.isEmpty()) { this.taskDescription = " "; }
+        else { this.taskDescription = taskDescription; }
+        this.deadline = deadline;
     }
     
     @Override
@@ -43,7 +44,7 @@ public class Initiator extends FlowLogic<SignedTransaction> {
         ServiceHub serviceHub = getServiceHub();
         Party me = getOurIdentity();
 
-        ToDoState ts = new ToDoState(me, me, taskDescription, new Date());
+        ToDoState ts = new ToDoState(me, me, taskDescription, new Date(), deadline);
 
         Party notary = serviceHub.getNetworkMapCache().getNotaryIdentities().get(0);
 
